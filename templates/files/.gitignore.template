@@ -1,0 +1,8 @@
+# credentials and other env files
+*.aes
+*.env
+!*example.env
+
+# dev tools metadata
+.idea/
+.vscode/

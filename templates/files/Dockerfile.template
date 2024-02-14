@@ -1,0 +1,12 @@
+FROM golang:{{ .Version }}
+
+# Copy the Go Modules manifests
+# cache deps before building and copying source so that
+# source changes don't invalidate the downloaded layer
+COPY go.mod go.mod
+COPY go.sum go.sum
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 go build -gcflags "all=-N -l" -o bootstrap ./
+CMD ["./bootstrap"]

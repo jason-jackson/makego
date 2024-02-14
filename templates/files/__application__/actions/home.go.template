@@ -1,0 +1,8 @@
+{{ template "header.template" . }}package actions
+
+import (
+	"net/http"
+	"{{ .Router.Package }}"
+)
+
+{{ .Router.HomeView }}

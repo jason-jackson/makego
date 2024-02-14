@@ -1,0 +1,23 @@
+{{ template "header.template" . }}package model
+
+import (
+	"log"
+
+	"{{ .PkgName }}/app"{{ if .ORM.Driver }}
+	"{{ .ORM.Driver }}"{{ end}}
+	"{{ .ORM.Package }}"
+)
+
+var DB {{ .ORM.Object }}
+
+func Init() {
+	if err := connect(); err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func connect() error {
+	var err error
+	{{ template "ORM Init" . }}
+	return err
+}

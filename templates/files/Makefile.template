@@ -1,0 +1,20 @@
+app: db
+	docker-compose up -d app
+
+test: testdb
+	docker-compose run --rm test whenavail testdb {{ .Database.Port }} 10 go test -v ./...
+
+db:
+	docker-compose up -d db
+
+testdb:
+	docker-compose up -d testdb
+
+{{ .Database.Admin }}:
+	docker-compose up -d {{ .Database.Admin }}
+
+clean:
+	docker-compose kill
+	docker-compose rm -f
+
+fresh: clean app

@@ -1,0 +1,7 @@
+{{ template "header.template" . }}package main
+
+import "{{ .PkgName }}/cmd"
+
+func main() {
+	cmd.Execute()
+}

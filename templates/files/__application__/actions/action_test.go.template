@@ -1,0 +1,29 @@
+{{ template "header.template" . }}package actions
+
+import (
+	"testing"
+
+	"{{ .Router.Package }}"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+)
+
+type ActionSuite struct {
+router {{ .Router.Object }}
+
+suite.Suite
+*require.Assertions
+}
+
+func (as *ActionSuite) SetupTest() {
+as.Assertions = require.New(as.T())
+}
+
+// Test_ActionSuite runs the test suite
+func Test_ActionSuite(t *testing.T) {
+as := ActionSuite{
+	router: App(),
+}
+
+suite.Run(t, &as)
+}

@@ -1,0 +1,19 @@
+{{ template "header.template" . }}package actions
+
+import (
+	"io"
+	"net/http"
+	"net/http/httptest"
+)
+
+func (as *ActionSuite) Test_homeView() {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/", nil)
+	as.router.ServeHTTP(w, req)
+
+	as.Equal(http.StatusOK, w.Result().StatusCode)
+
+	body, err := io.ReadAll(w.Body)
+	as.NoError(err)
+	as.Contains("Welcome!", body)
+}

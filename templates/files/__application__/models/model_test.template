@@ -1,0 +1,33 @@
+{{ template "header.template" . }}package models
+
+import (
+	"testing"
+
+	"{{ .ORM.Package }}"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+)
+
+type ModelSuite struct {
+	db {{ .ORM.Object }}
+
+	suite.Suite
+	*require.Assertions
+}
+
+func (as *ModelSuite) SetupTest() {
+	as.Assertions = require.New(as.T())
+}
+
+// Test_ModelSuite runs the test suite
+func Test_ModelSuite(t *testing.T) {
+	if err := connect(); err != nil {
+		panic(err)
+	}
+
+	ms := &ModelSuite{
+		db: DB,
+	}
+
+	suite.Run(t, ms)
+}

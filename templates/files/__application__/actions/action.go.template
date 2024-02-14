@@ -1,0 +1,14 @@
+{{ template "header.template" . }}package actions
+
+import {{ if eq .Router.Name "mux" }}(
+	"http"
+
+	"{{ .Router.Package }}"
+){{ else }}"{{ .Router.Package }}"{{end}}
+
+// Init initializes the actions package
+func Init() {
+}
+
+// App Creates and returns the application with routes
+{{ .Router.App }}

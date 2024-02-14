@@ -1,0 +1,17 @@
+{{ template "header.template" . }}package app
+
+// Init initializes the app package
+func Init() {
+}
+
+// Set any global constants here
+const ()
+
+// Set global variables here, if needed add them to cmd/root.go
+// as a persistent flag to load them from args/config/env
+var (
+	AppName     string
+	DatabaseDsn string{{ if .Sentry }}
+	SentryDsn   string{{end}}
+	Port        string
+)
