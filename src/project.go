@@ -109,6 +109,10 @@ func (p *Project) Generate() error {
 		return err
 	}
 
+	if err := exec.Command("go", "fmt").Run(); err != nil {
+		return err
+	}
+
 	return changeFolder(p.absolutePath)
 }
 
