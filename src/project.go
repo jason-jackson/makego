@@ -66,7 +66,6 @@ func (p *Project) Generate() error {
 	if err != nil {
 		return err
 	}
-	log.Fatalln(initApp, p.Version, p.PkgName)
 
 	if err := makeFolder(p.Folder); err != nil {
 		return err
