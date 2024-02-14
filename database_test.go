@@ -1,59 +1,54 @@
-package src
+package main
 
 import (
 	"strings"
 	"testing"
 )
 
-func Test_findLicense(t *testing.T) {
+func Test_findDatabase(t *testing.T) {
 	testCases := []struct {
 		name    string
 		search  string
-		want    string
+		want    Database
 		wantErr string
 	}{
 		{
-			name:   "empty",
-			search: "",
-			want:   "",
-		},
-		{
-			name:   "none",
-			search: "none",
-			want:   "",
+			name:    "empty",
+			search:  "",
+			wantErr: "no database matching",
 		},
 		{
 			name:   "exact name",
-			search: "mit",
-			want:   "mit",
+			search: "mysql",
+			want:   databases["mysql"],
 		},
 		{
 			name:   "exact match",
-			search: "newbsd",
-			want:   "bsd",
+			search: "pg",
+			want:   databases["postgres"],
 		},
 		{
 			name:   "different case",
-			search: "GPLv3",
-			want:   "gpl3",
+			search: "postgreSQL",
+			want:   databases["postgres"],
 		},
 		{
 			name:    "not found",
 			search:  "does not exist",
-			wantErr: "no license matching",
+			wantErr: "no database matching",
 		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
-			want, err := findLicense(tC.search)
+			want, err := findDatabase(tC.search)
 			if tC.wantErr != "" {
 				if !strings.Contains(err.Error(), tC.wantErr) {
 					t.Errorf("expected `%s` to contain `%s`", err.Error(), tC.wantErr)
 				}
 				return
 			}
-			if tC.want != want {
-				t.Errorf("expected: `%s` got: `%s`", tC.want, want)
+			if tC.want.Name != want.Name {
+				t.Errorf("expected: `%s` got: `%s`", tC.want.Name, want.Name)
 			}
 		})
 	}

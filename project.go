@@ -1,8 +1,9 @@
-package src
+package main
 
 import (
 	"bufio"
 	"bytes"
+	"embed"
 	"fmt"
 	"io/fs"
 	"log"
@@ -16,6 +17,9 @@ import (
 )
 
 const ext = ".template"
+
+//go:embed templates/licenses templates/files/*
+var fSys embed.FS
 
 type Project struct {
 	AppName   string
@@ -108,10 +112,12 @@ func (p *Project) Generate() error {
 	if err := exec.Command("go", "mod", "tidy").Run(); err != nil {
 		return err
 	}
+	log.Println("✓ tidy")
 
 	if err := exec.Command("go", "fmt").Run(); err != nil {
 		return err
 	}
+	log.Println("✓ format")
 
 	return changeFolder(p.absolutePath)
 }
@@ -140,16 +146,13 @@ func (p *Project) data() map[string]any {
 func (p *Project) makeFiles() error {
 	log.Println("generating files from templates...")
 
-	fPath := filepath.Join(p.executablePath, "templates")
-	fSys := os.DirFS(fPath)
-
 	// Load templates
 	templates, err := template.ParseFS(
 		fSys,
-		"files/*"+ext,
-		"files/*/*"+ext,
-		"files/*/*/*"+ext,
-		"licenses/"+p.License+"/*"+ext,
+		"templates/files/*"+ext,
+		"templates/files/*/*"+ext,
+		"templates/files/*/*/*"+ext,
+		"templates/licenses/"+p.License+"/*"+ext,
 	)
 	if err != nil {
 		return err
@@ -164,7 +167,7 @@ func (p *Project) makeFiles() error {
 	}
 
 	// Make templates
-	root := "files"
+	root := "templates/files"
 	if err := fs.WalkDir(fSys, root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil || path == root {
 			return err
@@ -365,7 +368,8 @@ func (p *Project) setORM() error {
 
 	p.packages = append(p.packages, p.ORM.Package)
 	if driver := p.ORM.DBDriver[p.Database.Name]; driver != "" {
-		p.packages = append(p.packages, p.ORM.Driver+driver)
+		p.ORM.Driver += p.ORM.DBDriver[p.Database.Name]
+		p.packages = append(p.packages, p.ORM.Driver)
 		p.globalTemplates["ORM Init"] = p.ORM.Init
 	}
 

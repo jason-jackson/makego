@@ -1,46 +1,41 @@
-package src
+package main
 
 import (
 	"strings"
 	"testing"
 )
 
-func Test_findDatabase(t *testing.T) {
+func Test_findRouter(t *testing.T) {
 	testCases := []struct {
 		name    string
 		search  string
-		want    Database
+		want    Router
 		wantErr string
 	}{
 		{
 			name:    "empty",
 			search:  "",
-			wantErr: "no database matching",
+			wantErr: "no router matching",
 		},
 		{
 			name:   "exact name",
-			search: "mysql",
-			want:   databases["mysql"],
-		},
-		{
-			name:   "exact match",
-			search: "pg",
-			want:   databases["postgres"],
+			search: "gin",
+			want:   routers["gin"],
 		},
 		{
 			name:   "different case",
-			search: "postgreSQL",
-			want:   databases["postgres"],
+			search: "ECHO",
+			want:   routers["echo"],
 		},
 		{
 			name:    "not found",
 			search:  "does not exist",
-			wantErr: "no database matching",
+			wantErr: "no router matching",
 		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
-			want, err := findDatabase(tC.search)
+			want, err := findRouter(tC.search)
 			if tC.wantErr != "" {
 				if !strings.Contains(err.Error(), tC.wantErr) {
 					t.Errorf("expected `%s` to contain `%s`", err.Error(), tC.wantErr)
