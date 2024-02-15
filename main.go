@@ -26,6 +26,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/jason-jackson/makego/src"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -33,7 +34,7 @@ import (
 
 var cfgFile string
 
-var project = NewProject()
+var project = src.NewProject()
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{

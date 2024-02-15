@@ -1,9 +1,8 @@
-package main
+package src
 
 import (
 	"bufio"
 	"bytes"
-	"embed"
 	"fmt"
 	"io/fs"
 	"log"
@@ -14,12 +13,11 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/jason-jackson/makego/templates"
 )
 
 const ext = ".template"
-
-//go:embed templates/licenses templates/files/*
-var fSys embed.FS
 
 type Project struct {
 	AppName   string
@@ -147,12 +145,12 @@ func (p *Project) makeFiles() error {
 	log.Println("generating files from templates...")
 
 	// Load templates
-	templates, err := template.ParseFS(
-		fSys,
-		"templates/files/*"+ext,
-		"templates/files/*/*"+ext,
-		"templates/files/*/*/*"+ext,
-		"templates/licenses/"+p.License+"/*"+ext,
+	t, err := template.ParseFS(
+		templates.FS,
+		"files/*"+ext,
+		"files/*/*"+ext,
+		"files/*/*/*"+ext,
+		"licenses/"+p.License+"/*"+ext,
 	)
 	if err != nil {
 		return err
@@ -160,15 +158,15 @@ func (p *Project) makeFiles() error {
 
 	// Load global templates
 	for name, content := range p.globalTemplates {
-		templates, err = templates.Parse(fmt.Sprintf(`{{ define "%s" }}%s{{ end }}`, name, content))
+		t, err = t.Parse(fmt.Sprintf(`{{ define "%s" }}%s{{ end }}`, name, content))
 		if err != nil {
 			return err
 		}
 	}
 
 	// Make templates
-	root := "templates/files"
-	if err := fs.WalkDir(fSys, root, func(path string, d fs.DirEntry, err error) error {
+	root := "files"
+	if err := fs.WalkDir(templates.FS, root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil || path == root {
 			return err
 		}
@@ -190,7 +188,7 @@ func (p *Project) makeFiles() error {
 		}
 
 		var b bytes.Buffer
-		if err := templates.ExecuteTemplate(&b, filepath.Base(path), p.data()); err != nil {
+		if err := t.ExecuteTemplate(&b, filepath.Base(path), p.data()); err != nil {
 			return err
 		}
 
@@ -206,7 +204,7 @@ func (p *Project) makeFiles() error {
 	}
 	for k, contents := range p.Templates {
 		if contents != "" {
-			templates, err = templates.Parse(contents)
+			t, err = t.Parse(contents)
 			if err != nil {
 				return err
 			}
@@ -216,7 +214,7 @@ func (p *Project) makeFiles() error {
 			}
 
 			var b bytes.Buffer
-			if err := templates.Execute(&b, p.data()); err != nil {
+			if err := t.Execute(&b, p.data()); err != nil {
 				return err
 			}
 
