@@ -113,8 +113,6 @@ func (p *Project) Generate() error {
 	}
 	log.Println("✓ format")
 	return nil
-
-	return changeFolder(p.absolutePath)
 }
 
 func (p *Project) addNamedTemplate(name, content string) error {
