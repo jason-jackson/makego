@@ -24,7 +24,7 @@ func findLicense(name string) (string, error) {
 }
 
 var licenses = map[string][]string{
-	"":        {"none"},
+	"none":    {""},
 	"agpl":    {"agpl-3.0", "affero gpl", "gnu agpl"},
 	"apache":  {"apache-2.0", "apache20", "apache 2.0", "apache2.0"},
 	"bsd":     {"bsd-3-Clause", "newbsd", "3 clause bsd", "3-clause bsd"},
