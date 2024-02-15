@@ -15,12 +15,12 @@ func Test_findLicense(t *testing.T) {
 		{
 			name:   "empty",
 			search: "",
-			want:   "",
+			want:   "none",
 		},
 		{
 			name:   "none",
 			search: "none",
-			want:   "",
+			want:   "none",
 		},
 		{
 			name:   "exact name",
