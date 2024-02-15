@@ -1,4 +1,4 @@
-version: "2"
+{{ if .Docker }}version: "2"
 services:
   app:
     build: ./
@@ -33,3 +33,4 @@ services:
       PMA_HOST: db
       PMA_USER: admin
       PMA_PASSWORD: abc123
+{{ end }}

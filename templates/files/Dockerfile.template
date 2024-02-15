@@ -1,4 +1,4 @@
-FROM golang:{{ .Version }}
+{{ if .Docker }}FROM golang:{{ .Version }}
 
 # Copy the Go Modules manifests
 # cache deps before building and copying source so that
@@ -10,3 +10,4 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 go build -gcflags "all=-N -l" -o bootstrap ./
 CMD ["./bootstrap"]
+{{ end }}

@@ -1,4 +1,4 @@
-.editorconfig
+{{ if .Docker }}.editorconfig
 .gitignore
 docker-compose.yml
 LICENSE
@@ -7,3 +7,4 @@ Makefile
 *.aes
 *.env
 *.md
+{{ end }}

@@ -34,13 +34,11 @@ type Project struct {
 	ORM       ORM
 	Router    Router
 
-	Templates       map[string]string
-	globalTemplates map[string]string
+	Templates map[string]string
 
-	skipFiles      map[string]struct{}
-	packages       []string
-	absolutePath   string
-	executablePath string
+	absolutePath string
+	templates    *template.Template
+	packages     []string
 }
 
 func NewProject() Project {
@@ -52,10 +50,8 @@ func NewProject() Project {
 			"github.com/spf13/pflag",
 			"github.com/spf13/viper",
 		},
-		Version:         getGoVersion(),
-		globalTemplates: map[string]string{},
-		executablePath:  getExecutableDirectory(),
-		absolutePath:    getWorkingDirectory(),
+		Version:      getGoVersion(),
+		absolutePath: getWorkingDirectory(),
 	}
 }
 
@@ -116,8 +112,15 @@ func (p *Project) Generate() error {
 		return err
 	}
 	log.Println("✓ format")
+	return nil
 
 	return changeFolder(p.absolutePath)
+}
+
+func (p *Project) addNamedTemplate(name, content string) error {
+	var err error
+	p.templates, err = p.templates.Parse(fmt.Sprintf(`{{ define "%s" }}%s{{ end }}`, name, content))
+	return err
 }
 
 func (p *Project) data() map[string]any {
@@ -144,35 +147,15 @@ func (p *Project) data() map[string]any {
 func (p *Project) makeFiles() error {
 	log.Println("generating files from templates...")
 
-	// Load templates
-	t, err := template.ParseFS(
-		templates.FS,
-		"files/*"+ext,
-		"files/*/*"+ext,
-		"files/*/*/*"+ext,
-		"licenses/"+p.License+"/*"+ext,
-	)
+	fSys, err := fs.Sub(templates.FS, "files")
 	if err != nil {
 		return err
 	}
 
-	// Load global templates
-	for name, content := range p.globalTemplates {
-		t, err = t.Parse(fmt.Sprintf(`{{ define "%s" }}%s{{ end }}`, name, content))
+	if err := fs.WalkDir(fSys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-	}
-
-	// Make templates
-	root := "files"
-	if err := fs.WalkDir(templates.FS, root, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || path == root {
-			return err
-		}
-
-		// remove the "files" portion and the slash
-		path = filepath.Clean(path[len(root)+1:])
 
 		// change __application__ folder to user specified application folder
 		file := p.replaceAppFolder(path)
@@ -182,44 +165,46 @@ func (p *Project) makeFiles() error {
 			return makeFolder(file)
 		}
 
+		// remove .template extension
 		file = file[:len(file)-len(ext)]
-		if _, ok := p.skipFiles[file]; ok {
-			return nil
-		}
 
 		var b bytes.Buffer
-		if err := t.ExecuteTemplate(&b, filepath.Base(path), p.data()); err != nil {
+		if err := p.templates.ExecuteTemplate(&b, filepath.Base(path), p.data()); err != nil {
 			return err
 		}
 
-		log.Println("making file:", file)
-		return os.WriteFile(file, b.Bytes(), 0o640)
+		if b.Len() != 0 {
+			log.Println("making file:", file)
+			return os.WriteFile(file, b.Bytes(), 0o640)
+		}
+		return nil
 	}); err != nil {
 		return err
 	}
 
 	// Make provided templates
 	if len(p.Templates) > 0 {
-		log.Println("creating user templates...")
-	}
-	for k, contents := range p.Templates {
-		if contents != "" {
-			t, err = t.Parse(contents)
-			if err != nil {
-				return err
-			}
+		var err error
+		log.Println("generating user supplied templates...")
+		for k, contents := range p.Templates {
+			if contents != "" {
+				p.templates, err = p.templates.Parse(contents)
+				if err != nil {
+					return err
+				}
 
-			if err := makeFolder(filepath.Dir(k)); err != nil {
-				return nil
-			}
+				if err := makeFolder(filepath.Dir(k)); err != nil {
+					return nil
+				}
 
-			var b bytes.Buffer
-			if err := t.Execute(&b, p.data()); err != nil {
-				return err
-			}
+				var b bytes.Buffer
+				if err := p.templates.Execute(&b, p.data()); err != nil {
+					return err
+				}
 
-			log.Println("making file:", k)
-			return os.WriteFile(k, b.Bytes(), 0o640)
+				log.Println("making file:", k)
+				return os.WriteFile(k, b.Bytes(), 0o640)
+			}
 		}
 	}
 
@@ -293,10 +278,16 @@ func (p *Project) setup() error {
 		return err
 	}
 
-	if !p.Docker {
-		p.skipFiles[".dockerignore"] = struct{}{}
-		p.skipFiles["docker-compose.yml"] = struct{}{}
-		p.skipFiles["Dockerfile"] = struct{}{}
+	var err error
+	p.templates, err = template.ParseFS(
+		templates.FS,
+		"files/*"+ext,
+		"files/*/*"+ext,
+		"files/*/*/*"+ext,
+		"licenses/"+p.License+"/*"+ext,
+	)
+	if err != nil {
+		return err
 	}
 
 	if err := p.setDatabase(); err != nil {
@@ -337,24 +328,13 @@ func (p *Project) setDatabase() error {
 		return err
 	}
 
-	p.globalTemplates["Docker DB Env"] = p.Database.DockerEnv
-
-	return nil
+	return p.addNamedTemplate("Docker DB Env", p.Database.DockerEnv)
 }
 
 func (p *Project) setLicense() error {
 	var err error
 	p.License, err = findLicense(p.License)
-	if err != nil {
-		return err
-	}
-
-	if p.License == "" {
-		p.skipFiles["LICENSE"] = struct{}{}
-		p.globalTemplates["header.template"] = ""
-	}
-
-	return nil
+	return err
 }
 
 func (p *Project) setORM() error {
@@ -368,10 +348,9 @@ func (p *Project) setORM() error {
 	if driver := p.ORM.DBDriver[p.Database.Name]; driver != "" {
 		p.ORM.Driver += p.ORM.DBDriver[p.Database.Name]
 		p.packages = append(p.packages, p.ORM.Driver)
-		p.globalTemplates["ORM Init"] = p.ORM.Init
 	}
 
-	return nil
+	return p.addNamedTemplate("ORM Init", p.ORM.Init)
 }
 
 func (p *Project) setRouter() error {
@@ -403,14 +382,6 @@ func changeFolder(name string) error {
 
 	log.Println("cd to folder:", name)
 	return os.Chdir(name)
-}
-
-func getExecutableDirectory() string {
-	ex, err := os.Executable()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return filepath.Dir(ex)
 }
 
 func getGoVersion() string {
