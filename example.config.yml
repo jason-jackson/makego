@@ -1,0 +1,18 @@
+name: Example App # Application Name
+folder: application # Application folder, can be left blank for no folder
+license: mit # License, can be left blank for proprietary code
+copyright: user <user@example.com> # The copyright holder (and contact if desired)
+database: postgres # The database type to use (mysql, mariadb, postgres, etc)
+sentry: true # Whether or not to use Sentry
+header: true # Whether or not to add copyright header to most files
+docker: true # Whether or not to use Docker
+templates:
+  application/example.txt: | # File name (including path from base folder)
+    this
+    is
+    a
+    file
+  CONTRIBUTING.md: |
+    # Rules
+
+    Here are some rules for contributing to this project
