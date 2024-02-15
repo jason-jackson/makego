@@ -56,7 +56,7 @@ templates:
   CONTRIBUTING.md: |               # File name (including path from base folder)
     # Rules
 
-	Here are some rules for contributing to this project
+    Here are some rules for contributing to this project
 ```
 
-If you wish to include the license header in your template, put {{ template "header.template" . }} at the beginning.
+If you wish to include the license header in your template, put {{ template "header.template" . }} at the beginning of the file.
